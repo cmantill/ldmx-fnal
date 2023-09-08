@@ -30,7 +30,7 @@ ele_5deg20 = [
     "/gps/pos/type Plane",
     direction,
     # Linear energy
-    "/gps/ene/type lin",
+    "/gps/ene/type Lin",
     f"/gps/ene/min {energy_dn} GeV",
     f"/gps/ene/max {energy_up} GeV",
     "/gps/ene/gradient 0",
