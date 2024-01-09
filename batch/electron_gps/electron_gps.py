@@ -1,10 +1,8 @@
-import argparse, sys
+import sys
 
-parser = argparse.ArgumentParser(f"ldmx fire {sys.argv[0]}")
-parser.add_argument("nevents", type=int)
-arg = parser.parse_args()
-
-nevents = arg.nevents
+nevents = int(sys.argv[1])
+output_dir = str(sys.argv[2])
+output_run = int(sys.argv[3])
 
 """
 Configure electron with:
@@ -59,22 +57,31 @@ from LDMX.SimCore import generators
 from LDMX.SimCore import simulator
 from LDMX.Recon import pfReco
 ecalPF = pfReco.pfEcalClusterProducer()
-ecalPF.doSingleCluster = False                                                                                                                        
+ecalPF.doSingleCluster = False                                                                                          
 ecalPF.logEnergyWeight = True
 
 particle_source = generators.gps("particle_source", ele_5deg20)
 sim = simulator.simulator("mySim")
 sim.setDetector("ldmx-det-v14", True)
-# sim.setDetector("dmx-det-v14-8GeV", True)
 sim.description = "Single electron particle source"
 sim.beamSpotSmear = [20.0, 80.0, 0.0]  # mm
 sim.generators.append(particle_source)
 
-p.run = 1
-p.outputFiles = [f"data/egps_upstreamtagger_{energy_up}_{energy_dn}_gev.root"]
+p.run = output_run
+p.outputFiles = [f"{output_dir}/{output_run}_egps_upstreamtagger_{energy_up}_{energy_dn}_gev.root"]
 p.maxEvents = nevents
 p.logFrequency = 1
 
+from LDMX.TrigScint.trigScint import TrigScintDigiProducer
+from LDMX.TrigScint.trigScint import TrigScintClusterProducer
+from LDMX.TrigScint.trigScint import trigScintTrack
+ts_digis = [
+        TrigScintDigiProducer.pad1(),
+        TrigScintDigiProducer.pad2(),
+        TrigScintDigiProducer.pad3(),
+        ]
+for d in ts_digis :
+    d.randomSeed = 1
 
 import LDMX.Ecal.EcalGeometry
 import LDMX.Ecal.ecal_hardcoded_conditions
@@ -87,4 +94,30 @@ p.sequence = [
     ecal_digi.EcalDigiProducer(),
     ecal_digi.EcalRecProducer(),
     ecalPF,
+    *ts_digis,
+    TrigScintClusterProducer.pad1(),
+    TrigScintClusterProducer.pad2(),
+    TrigScintClusterProducer.pad3(),
 ]
+
+p.keep = [
+    "drop TrigScintScoringPlaneHits.*",
+    "drop SimParticles.*",
+    "drop Trigger.*",
+    "drop TaggerSimHits.*",
+    "drop RecoilSimHits.*",
+    "drop HcalSimHits.*",
+    "drop EcalSimHits.*",
+    "drop TargetSimHits.*",
+    "drop Magnet.*",
+    "drop TriggerPad1SimHits.*",
+    "drop TriggerPad2SimHits.*",
+    "drop TriggerPad3SimHits.*",
+    "drop EcalDigis.*",
+    "drop EcalRecHits.*",
+    "drop HcalScoringPlaneHits.*",
+    "drop TrackerScoringPlaneHits.*",
+    "drop trigScintDigisPad1.*",
+    "drop trigScintDigisPad2.*",
+]
+
